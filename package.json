@@ -25,7 +25,8 @@
   "files": [
     "index.js",
     "README.md",
-    "package.json"
+    "package.json",
+    "LICENSE"
   ],
   "dependencies": {
     "express-validator": "^7.0.1"
