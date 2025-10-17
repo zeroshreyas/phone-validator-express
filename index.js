@@ -1,4 +1,4 @@
-import { body, validationResult } from 'express-validator';
+// Custom validation system - no external dependencies
 
 /**
  * Phone number validation patterns for different countries
@@ -250,6 +250,45 @@ function formatPhoneNumberAuto(phoneNumber, country) {
 }
 
 /**
+ * Custom validation error class
+ */
+class ValidationError extends Error {
+  constructor(message, field, value) {
+    super(message);
+    this.name = 'ValidationError';
+    this.field = field;
+    this.value = value;
+  }
+}
+
+/**
+ * Custom validation result class
+ */
+class ValidationResult {
+  constructor() {
+    this.errors = [];
+  }
+
+  isEmpty() {
+    return this.errors.length === 0;
+  }
+
+  array() {
+    return this.errors.map(error => ({
+      type: 'field',
+      msg: error.message,
+      value: error.value,
+      path: error.field,
+      location: 'body'
+    }));
+  }
+
+  addError(field, message, value) {
+    this.errors.push({ field, message, value });
+  }
+}
+
+/**
  * Express.js middleware for phone number validation
  * @param {string} fieldName - Name of the field to validate
  * @param {Object} options - Validation options
@@ -290,65 +329,76 @@ export function phoneValidator(fieldName = 'phone', options = {}) {
   // Merge with custom error messages
   const errors = { ...defaultErrors, ...errorMessages };
 
-  return [
-    body(fieldName)
-      .custom((value) => {
-        // Check if field is empty
-        if (!value || value.trim() === '') {
-          if (!required) {
-            return true; // Skip validation if field is optional and empty
-          }
-          throw new Error(customMessage || errors.required);
+  return (req, res, next) => {
+    try {
+      const value = req.body[fieldName];
+      
+      // Check if field is empty
+      if (!value || value.trim() === '') {
+        if (!required) {
+          return next(); // Skip validation if field is optional and empty
         }
+        throw new ValidationError(customMessage || errors.required, fieldName, value);
+      }
 
-        // Check if field is just whitespace
-        if (value.trim() === '') {
-          throw new Error(customMessage || errors.empty);
-        }
+      // Check if field is just whitespace
+      if (value.trim() === '') {
+        throw new ValidationError(customMessage || errors.empty, fieldName, value);
+      }
 
-        // Validate the phone number
-        const result = validatePhoneNumber(value, country, type);
-        if (!result.isValid) {
-          // Use specific error message based on the error type
-          let errorMessage = customMessage || errors.invalid;
-          
-          if (result.errorType === 'required') {
-            errorMessage = errors.required;
-          } else if (result.errorType === 'invalidLength') {
-            errorMessage = errors.invalidLength;
-          } else if (result.errorType === 'invalidFormat') {
-            errorMessage = errors.invalidFormat;
-          }
-          
-          throw new Error(errorMessage);
-        }
-
-        return true;
-      })
-      .customSanitizer((value) => {
-        if (!value) return value;
-        const result = validatePhoneNumber(value, country, type);
-        if (!result.isValid) return value;
+      // Validate the phone number
+      const result = validatePhoneNumber(value, country, type);
+      if (!result.isValid) {
+        // Use specific error message based on the error type
+        let errorMessage = customMessage || errors.invalid;
         
-        // Apply formatting based on options
-        return formatPhoneNumberWithOptions(result.formatted, country, format, customFormatter);
-      })
-  ];
+        if (result.errorType === 'required') {
+          errorMessage = errors.required;
+        } else if (result.errorType === 'invalidLength') {
+          errorMessage = errors.invalidLength;
+        } else if (result.errorType === 'invalidFormat') {
+          errorMessage = errors.invalidFormat;
+        }
+        
+        throw new ValidationError(errorMessage, fieldName, value);
+      }
+
+      // Apply formatting if validation passed
+      if (result.isValid && result.formatted) {
+        req.body[fieldName] = formatPhoneNumberWithOptions(result.formatted, country, format, customFormatter);
+      }
+
+      next();
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        const validationResult = new ValidationResult();
+        validationResult.addError(error.field, error.message, error.value);
+        req.validationErrors = validationResult;
+        return res.status(400).json({
+          status: 'error',
+          message: 'Validation failed',
+          errors: validationResult.array()
+        });
+      }
+      next(error);
+    }
+  };
 }
 
 /**
- * Validation result middleware
+ * Validation result middleware (for backward compatibility)
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  * @param {Function} next - Express next function
  */
 export function validateRequest(req, res, next) {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
+  // This function is now mainly for backward compatibility
+  // The phoneValidator middleware handles validation directly
+  if (req.validationErrors && !req.validationErrors.isEmpty()) {
     return res.status(400).json({
       status: 'error',
       message: 'Validation failed',
-      errors: errors.array()
+      errors: req.validationErrors.array()
     });
   }
   next();

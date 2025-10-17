@@ -136,7 +136,7 @@ console.log(`\n${colors.bold}Testing phoneValidator middleware:${colors.reset}`)
 
 test('Create phone validator middleware', () => {
   const validator = phoneValidator('phone', { country: 'IN', type: 'mobile' });
-  return assertTrue(Array.isArray(validator), 'Should return an array of validators');
+  return assertTrue(typeof validator === 'function', 'Should return a middleware function');
 });
 
 test('Create phone validator with custom options', () => {
@@ -146,7 +146,7 @@ test('Create phone validator with custom options', () => {
     required: false,
     customMessage: 'Custom error message'
   });
-  return assertTrue(Array.isArray(validator), 'Should return an array of validators');
+  return assertTrue(typeof validator === 'function', 'Should return a middleware function');
 });
 
 // Test formatting functionality
@@ -217,7 +217,7 @@ test('Create phone validator with international format', () => {
     type: 'mobile', 
     format: 'international' 
   });
-  return assertTrue(Array.isArray(validator), 'Should return an array of validators');
+  return assertTrue(typeof validator === 'function', 'Should return a middleware function');
 });
 
 test('Create phone validator with national format', () => {
@@ -226,7 +226,7 @@ test('Create phone validator with national format', () => {
     type: 'mobile', 
     format: 'national' 
   });
-  return assertTrue(Array.isArray(validator), 'Should return an array of validators');
+  return assertTrue(typeof validator === 'function', 'Should return a middleware function');
 });
 
 test('Create phone validator with custom formatter', () => {
@@ -237,7 +237,7 @@ test('Create phone validator with custom formatter', () => {
     format: 'custom',
     customFormatter: customFormatter
   });
-  return assertTrue(Array.isArray(validator), 'Should return an array of validators');
+  return assertTrue(typeof validator === 'function', 'Should return a middleware function');
 });
 
 // Test custom error messages
@@ -254,7 +254,7 @@ test('Create phone validator with custom error messages', () => {
       invalid: 'Invalid phone number provided'
     }
   });
-  return assertTrue(Array.isArray(validator), 'Should return an array of validators');
+  return assertTrue(typeof validator === 'function', 'Should return a middleware function');
 });
 
 test('Create phone validator with partial custom error messages', () => {
@@ -266,7 +266,7 @@ test('Create phone validator with partial custom error messages', () => {
       invalidFormat: 'Custom format message'
     }
   });
-  return assertTrue(Array.isArray(validator), 'Should return an array of validators');
+  return assertTrue(typeof validator === 'function', 'Should return a middleware function');
 });
 
 test('Create phone validator with custom message (legacy)', () => {
@@ -275,7 +275,7 @@ test('Create phone validator with custom message (legacy)', () => {
     type: 'mobile',
     customMessage: 'Legacy custom message'
   });
-  return assertTrue(Array.isArray(validator), 'Should return an array of validators');
+  return assertTrue(typeof validator === 'function', 'Should return a middleware function');
 });
 
 // Test format placeholders

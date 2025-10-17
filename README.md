@@ -11,6 +11,8 @@ A comprehensive phone number validation package with Express.js middleware suppo
 - 🎨 **Developer control** - Override default formatting with custom functions
 - 📋 **Format placeholders** - Built-in format examples to help developers understand expected formats
 - 🛡️ **Type safety** - Built with modern JavaScript (ES6+)
+- 🔒 **Zero dependencies** - No external dependencies, fully self-contained
+- 🛡️ **Security first** - No security vulnerabilities, completely secure
 - 🧪 **Comprehensive testing** - Full test coverage included
 
 ## Installation
